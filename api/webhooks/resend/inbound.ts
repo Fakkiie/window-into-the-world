@@ -4,9 +4,6 @@ import { createDb, createResponse, findSubscriberByEmail, upsertSubscriber } fro
 import { methodNotAllowed, readRawBody } from '../../_lib/http';
 import { parseInboundPayload, verifyResendWebhook } from '../../_lib/webhook';
 
-const envConfig = getConfig();
-const supabase = createDb(envConfig);
-
 export const config = {
   api: {
     bodyParser: false,
@@ -19,6 +16,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const envConfig = getConfig();
+    const supabase = createDb(envConfig);
     const streamedBody = await readRawBody(req);
     const rawBody =
       streamedBody ||
@@ -61,6 +60,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ ok: true });
   } catch (error) {
     console.error('resend inbound webhook failed', error);
-    return res.status(500).json({ error: 'Webhook processing failed' });
+    return res.status(500).json({
+      error: 'Webhook processing failed',
+      detail: error instanceof Error ? error.message : 'unknown error',
+    });
   }
 }
