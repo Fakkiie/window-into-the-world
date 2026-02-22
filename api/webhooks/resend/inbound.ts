@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { getConfig } from '../../_lib/config.js';
 import { createDb, createResponse, findSubscriberByEmail, upsertSubscriber } from '../../_lib/db.js';
 import { methodNotAllowed, readRawBody } from '../../_lib/http.js';
-import { parseInboundPayload, verifyResendWebhook } from '../../_lib/webhook.js';
+import { fetchReceivedEmailBody, parseInboundPayload, verifyResendWebhook } from '../../_lib/webhook.js';
 
 export const config = {
   api: {
@@ -31,7 +31,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       rawBody,
       headers: req.headers,
       secret: envConfig.resendWebhookSecret,
-      resendApiKey: envConfig.resendApiKey,
     });
 
     if (!verified) {
@@ -41,9 +40,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const payload = JSON.parse(rawBody || '{}') as Record<string, unknown>;
     const inbound = parseInboundPayload(payload);
 
-    if (!inbound.fromEmail || !inbound.bodyText) {
+    if (inbound.type !== 'email.received') {
+      return res.status(200).json({ ok: true, ignored: true });
+    }
+
+    if (!inbound.fromEmail || !inbound.emailId) {
       return res.status(400).json({ error: 'Missing inbound payload fields' });
     }
+
+    const fullEmail = await fetchReceivedEmailBody(envConfig.resendApiKey, inbound.emailId);
+    const finalBody = fullEmail.text || inbound.bodyText || '[no text body]';
+    const finalSubject = fullEmail.subject || inbound.subject || '';
 
     let subscriber = await findSubscriberByEmail(supabase, inbound.fromEmail);
     if (!subscriber) {
@@ -53,8 +60,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     await createResponse(supabase, {
       subscriber_id: subscriber.id,
       from_email: inbound.fromEmail,
-      subject: inbound.subject,
-      body_text: inbound.bodyText,
+      subject: finalSubject,
+      body_text: finalBody,
       received_at: inbound.receivedAt,
     });
 
