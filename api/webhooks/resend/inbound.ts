@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getConfig } from '../../_lib/config';
-import { createDb, createResponse, findSubscriberByEmail, upsertSubscriber } from '../../_lib/db';
-import { methodNotAllowed, readRawBody } from '../../_lib/http';
-import { parseInboundPayload, verifyResendWebhook } from '../../_lib/webhook';
+import { getConfig } from '../../_lib/config.js';
+import { createDb, createResponse, findSubscriberByEmail, upsertSubscriber } from '../../_lib/db.js';
+import { methodNotAllowed, readRawBody } from '../../_lib/http.js';
+import { parseInboundPayload, verifyResendWebhook } from '../../_lib/webhook.js';
 
 export const config = {
   api: {

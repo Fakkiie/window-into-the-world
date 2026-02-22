@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { AppConfig } from './config';
+import type { AppConfig } from './config.js';
 
 interface Subscriber {
   id: string;

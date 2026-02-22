@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { getConfig } from './_lib/config';
-import { createDb, upsertSubscriber } from './_lib/db';
-import { createEmailClient, sendWelcomeEmail } from './_lib/email';
-import { methodNotAllowed } from './_lib/http';
+import { getConfig } from './_lib/config.js';
+import { createDb, upsertSubscriber } from './_lib/db.js';
+import { createEmailClient, sendWelcomeEmail } from './_lib/email.js';
+import { methodNotAllowed } from './_lib/http.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
