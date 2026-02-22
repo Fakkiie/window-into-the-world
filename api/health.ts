@@ -1,10 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { methodNotAllowed } from './_lib/http';
-
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default function handler(req: any, res: any) {
   if (req.method !== 'GET') {
-    return methodNotAllowed(res, 'GET');
+    res.setHeader('Allow', 'GET');
+    return res.status(405).json({ error: 'Method not allowed' });
   }
-
-  return res.status(200).json({ ok: true });
+  return res.status(200).json({ ok: true, runtime: 'vercel-function' });
 }
