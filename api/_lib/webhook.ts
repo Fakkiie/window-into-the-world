@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import type { IncomingHttpHeaders } from 'http';
+import { Resend } from 'resend';
 
 function safeEqual(a: string, b: string): boolean {
   const aBuf = Buffer.from(a || '', 'utf8');
@@ -28,13 +29,43 @@ export function verifyResendWebhook({
   rawBody,
   headers,
   secret,
+  resendApiKey,
 }: {
   rawBody: string;
   headers: IncomingHttpHeaders;
   secret: string;
+  resendApiKey?: string;
 }): boolean {
   if (!secret) return false;
 
+  const svixId = headers['svix-id'];
+  const svixTimestamp = headers['svix-timestamp'];
+  const svixSignature = headers['svix-signature'];
+
+  // Resend webhooks now use Svix signatures. Verify with the SDK helper first.
+  if (
+    typeof svixId === 'string' &&
+    typeof svixTimestamp === 'string' &&
+    typeof svixSignature === 'string'
+  ) {
+    try {
+      const resend = new Resend(resendApiKey || 're_placeholder');
+      resend.webhooks.verify({
+        payload: rawBody,
+        headers: {
+          id: svixId,
+          timestamp: svixTimestamp,
+          signature: svixSignature,
+        },
+        webhookSecret: secret,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Fallback for legacy header format.
   const signatureHeader = headers['resend-signature'] || headers['x-resend-signature'] || '';
   const timestamp = headers['resend-timestamp'] || headers['x-resend-timestamp'] || '';
 

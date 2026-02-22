@@ -31,6 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       rawBody,
       headers: req.headers,
       secret: envConfig.resendWebhookSecret,
+      resendApiKey: envConfig.resendApiKey,
     });
 
     if (!verified) {
